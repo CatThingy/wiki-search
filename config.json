@@ -1,5 +1,7 @@
 {
-    "token": "your-token.here",
-    "prefix": "w!",
-    "wiki-source": "en.wikipedia.org"
+    "token": "your.token-here",
+    "defaultSettings": {
+        "prefix": "w!",
+        "sourceWiki": "en.wikipedia.org"
+    }
 }
