@@ -52,6 +52,7 @@ client.on("message", message => {
             cmdSearch(args, message, serverSettings);
             break;
         default:
+            cmdSearch([command, ...args], message, serverSettings);
             return;
     }
 });
