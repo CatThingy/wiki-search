@@ -2,6 +2,6 @@
     "token": "your.token-here",
     "defaultSettings": {
         "prefix": "w!",
-        "sourceWiki": "en.wikipedia.org"
+        "wiki": "en.wikipedia.org"
     }
 }
