@@ -1,4 +1,4 @@
-# vex-info
+# wiki-search
 A Discord bot to easily link pages from any MediaWiki wiki.  
 
 
