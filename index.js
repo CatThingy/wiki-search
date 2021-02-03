@@ -45,7 +45,6 @@ client.on("message", message => {
                 break;
 
             case "search":
-            case "s":
             case "find":
             case "wiki":
             case "article":
@@ -178,4 +177,28 @@ async function cmdSearch(args, message, serverSettings) {
             description: "Categories: " + (categories.length ? categories.join() : "None")
         }
     });
+}
+
+function cmdHelp(message, serverSettings) {
+    message.channel.send({
+        embed: {
+            url: "https://www.github.com/CatThingy/wiki-search",
+            title: "WikiSearch",
+            fields: [
+                {
+                    name: serverSettings.prefix + "help",
+                    value: "Shows this message."
+                },
+                {
+                    name: serverSettings.prefix + "config [setting] [value]",
+                    value: "Configures this bot. Use " + serverSettings.prefix + "config by itself to see possible options."
+                },
+                {
+                    name: serverSettings.prefix + "search [value]",
+                    value: "Searches the wiki specified in the config for the term. \n"
+                     + serverSettings.prefix + "[value] or putting your [[search term]] in two square brackets in a message also works."
+                }
+            ]
+        }
+    })
 }
