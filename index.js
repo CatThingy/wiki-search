@@ -92,17 +92,20 @@ function cmdConfig(args, message, serverSettings) {
             settings.set(message.guild.id, args[1], "prefix");
         }
         else if (args[0] == "wiki") {
-            message.channel.send("```\nWiki has been changed to " + args[1] + "\n```");
-            settings.set(message.guild.id, args[1], "wiki");
+            let cleanedUrl = (args[1].match(/https?:\/\/(.*?)\/?$/i) ?? args)[1]
+            message.channel.send("```\nWiki has been changed to " + cleanedUrl + "\n```");
+            settings.set(message.guild.id, cleanedUrl, "wiki");
         }
     }
 }
 
 async function cmdSearch(args, message, serverSettings) {
-    let sentMessage = await message.channel.send("Searching...")
+    let sentMessage = await message.channel.send("```\nSearching...```\n")
 
     const searchTerm = encodeURIComponent(args.join(""));
     let searchURL;
+
+    // Fandom/Gamepedia wikis don't need /w/ to access the API
     if ((serverSettings.wiki).includes("fandom") || (serverSettings.wiki).includes("gamepedia")) {
         searchURL = "https://" + serverSettings.wiki + "/api.php"
     }
@@ -112,15 +115,33 @@ async function cmdSearch(args, message, serverSettings) {
 
     let pageTitle;
     let pageId;
+    let valid = true;
+
+    // Search query, only returns one result
     await fetch(searchURL + "?action=query&format=json&list=search&srlimit=1&srsearch=" + searchTerm)
         .then(data => data.json())
         .then(data => {
-            pageTitle = decodeURIComponent(data.query.search[0].title);
-            pageId = data.query.search[0].pageid
-        });
+            if (data.query.search.length == 0) {
+                sentMessage.edit("", {
+                    embed: {
+                        title: "No results found."
+                    }
+                })
+                valid = false;
+            }
+            else {
+                pageTitle = decodeURIComponent(data.query.search[0].title);
+                pageId = data.query.search[0].pageid
+            }
+        })
+        .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); });
 
     let categories = [];
 
+    // Prevents editing over "No results found."
+    if (!valid) { return }
+
+    // Get categories for the page
     await fetch(searchURL + "?action=query&format=json&prop=categories&titles=" + pageTitle)
         .then(data => data.json())
         .then(data => {
@@ -129,10 +150,13 @@ async function cmdSearch(args, message, serverSettings) {
                     categories.push(cat.title.replace("Category:", ""));
                 }
             }
-        });
+        })
+        .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
 
 
     let pageUrl = "https://";
+
+    // Fandom/Gamepedia doesn't need /wiki/ to access pages
     if (serverSettings.wiki.includes("fandom") || serverSettings.wiki.includes("gamepedia")) {
         pageUrl += serverSettings.wiki + "/" + encodeURIComponent(pageTitle);
     }
@@ -144,7 +168,7 @@ async function cmdSearch(args, message, serverSettings) {
         embed: {
             url: pageUrl,
             title: pageTitle,
-            description: "Categories: " + (categories.length ? categories.join() : "None") 
+            description: "Categories: " + (categories.length ? categories.join() : "None")
         }
     });
 }
