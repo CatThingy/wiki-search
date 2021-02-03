@@ -24,36 +24,43 @@ client.on("message", message => {
 
     let messageText = message.content.toLowerCase();
 
-    // Ignore if message doesn't start with a prefix
-    if (!messageText.startsWith(serverSettings.prefix)) { return; }
+    // Don't run commands if message doesn't start with a prefix
+    if (messageText.startsWith(serverSettings.prefix)) {
 
 
-    messageText = messageText.slice(serverSettings.prefix.length);
+        messageText = messageText.slice(serverSettings.prefix.length);
 
-    // Parse input, stripping off the command prefix and
-    // separating arguments. Spaces in quotes are ignored,
-    // so the whole quote counts as one argument.
-    const args = [...messageText.matchAll(/["'](.+?)["']|\b(.+?)(?:\s|$)/g)].map(v => v.slice(1).filter(n => n !== undefined)[0]);
+        // Parse input, stripping off the command prefix and
+        // separating arguments. Spaces in quotes are ignored,
+        // so the whole quote counts as one argument.
+        const args = [...messageText.matchAll(/["'](.+?)["']|\b(.+?)(?:\s|$)/g)].map(v => v.slice(1).filter(n => n !== undefined)[0]);
 
-    const command = args.shift();
+        const command = args.shift();
 
-    switch (command) {
-        case "config":
-        case "settings":
-        case "set":
-            cmdConfig(args, message, serverSettings);
-            break;
+        switch (command) {
+            case "config":
+            case "settings":
+            case "set":
+                cmdConfig(args, message, serverSettings);
+                break;
 
-        case "search":
-        case "s":
-        case "find":
-        case "wiki":
-        case "article":
-            cmdSearch(args, message, serverSettings);
-            break;
-        default:
-            cmdSearch([command, ...args], message, serverSettings);
-            return;
+            case "search":
+            case "s":
+            case "find":
+            case "wiki":
+            case "article":
+                cmdSearch(args, message, serverSettings);
+                break;
+            default:
+                cmdSearch([command, ...args], message, serverSettings);
+                return;
+        }
+    }
+    else {
+        let inlineSearch = messageText.match(/\[\[(.+)\]\]/);
+        if (inlineSearch !== null && inlineSearch[1] !== undefined) {
+            cmdSearch([inlineSearch[1]], message, serverSettings);
+        }
     }
 });
 
