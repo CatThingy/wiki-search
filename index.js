@@ -146,22 +146,40 @@ async function cmdSearch(args, message, serverSettings) {
         })
         .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); });
 
-    let categories = [];
-
     // Prevents editing over "No results found."
     if (!valid) { return }
 
-    // Get categories for the page
-    await fetch(searchURL + "?action=query&format=json&prop=categories&titles=" + pageTitle)
+    let excerpt;
+    let categories = [];
+
+    // Get excerpt from the page if avaliable
+    await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=100&explaintext=1&titles=" + pageTitle)
         .then(data => data.json())
         .then(data => {
-            if (data.query.pages[pageId].categories !== undefined) {
-                for (let cat of data.query.pages[pageId].categories) {
-                    categories.push(cat.title.replace("Category:", ""));
-                }
-            }
+            excerpt = data.query.pages[pageId].extract ?? undefined;
         })
         .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+
+    // Get categories from the page if no excerpt is avaliable
+    if (excerpt === undefined) {
+        await fetch(searchURL + "?action=query&format=json&prop=categories&titles=" + pageTitle)
+            .then(data => data.json())
+            .then(data => {
+                if (data.query.pages[pageId].categories !== undefined) {
+                    for (let cat of data.query.pages[pageId].categories) {
+                        if (categories.length < 5) {
+                            categories.push(cat.title.replace("Category:", ""));
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+            })
+            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+
+        categories = "Categories: " + (categories.join(", ") || "None");
+    }
 
 
     let pageUrl = "https://";
@@ -178,7 +196,7 @@ async function cmdSearch(args, message, serverSettings) {
         embed: {
             url: pageUrl,
             title: pageTitle,
-            description: "Categories: " + (categories.length ? categories.join() : "None")
+            description: excerpt ?? categories
         }
     });
 }
@@ -200,7 +218,7 @@ function cmdHelp(message, serverSettings) {
                 {
                     name: serverSettings.prefix + "search [value]",
                     value: "Searches the wiki specified in the config for the term. \n"
-                     + serverSettings.prefix + "[value] or putting your [[search term]] in two square brackets in a message also works."
+                        + serverSettings.prefix + "[value] or putting your [[search term]] in two square brackets in a message also works."
                 }
             ]
         }
