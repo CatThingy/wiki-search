@@ -163,7 +163,7 @@ async function cmdSearch(args, message, serverSettings) {
 
     else {
         // Get excerpt from the page if avaliable
-        await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=100&explaintext=1&titles=" + pageTitle)
+        await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=300&explaintext=1&titles=" + pageTitle)
             .then(data => data.json())
             .then(data => {
                 excerpt = data.query.pages[pageId].extract ?? undefined;
