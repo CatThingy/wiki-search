@@ -67,6 +67,7 @@ client.on("message", message => {
     }
 });
 
+//#region Commands
 function cmdConfig(args, message, serverSettings) {
     // Only allow administrators to edit settings, no settings can change in DMs
     if (!message.guild || !message.member.hasPermission("MANAGE_GUILD")) { return; }
@@ -208,7 +209,7 @@ async function cmdSearch(args, message, serverSettings) {
         embed: {
             url: pageUrl,
             title: pageTitle,
-            description: excerpt ?? categories
+            description: htmlDecode(excerpt ?? categories)
         }
     });
 }
@@ -236,3 +237,15 @@ function cmdHelp(message, serverSettings) {
         }
     })
 }
+//#endregion
+
+//#region Helper Functions
+function htmlDecode(str) {
+    return str.replace(/&gt/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#0*39;/g, "'")
+}
+//#endregion
