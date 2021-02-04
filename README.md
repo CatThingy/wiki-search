@@ -1,6 +1,17 @@
 # wiki-search
 A Discord bot to easily link pages from any MediaWiki wiki.  
 
+## Setup
+
+Clone the repository and run `npm install`. Replace `token` in `config.json` with your bot's token.
+  
+  
+After the bot is invited to a server, these commands are recommended:
+
+`w!config wiki [wiki]` to set up the wiki to use for the bot.  
+`w!config prefix [prefix]` if the prefix conflicts with any other bot.
+
+---
 
 ## Commands
 
@@ -14,6 +25,7 @@ A Discord bot to easily link pages from any MediaWiki wiki.
 Lists command syntax and links to this page.
 
 ---
+
 ### `config`
 Usage: `config [setting] [value?]`  
 
@@ -24,6 +36,7 @@ Valid settings are `prefix` for the bot prefix and `wiki` for the MediaWiki wiki
 Aliases: `settings`, `set`
 
 ---
+
 ### `search`
 Usage: `search [term]`  
 
