@@ -38,6 +38,10 @@ client.on("message", message => {
         const command = args.shift();
 
         switch (command) {
+            case "help":
+            case "h":
+                cmdHelp(message, serverSettings);
+                break;
             case "config":
             case "settings":
             case "set":
