@@ -197,8 +197,8 @@ async function cmdSearch(args, message, serverSettings) {
 
     let pageUrl = "https://";
 
-    // Fandom/Gamepedia doesn't need /wiki/ to access pages
-    if (serverSettings.wiki.includes("fandom") || serverSettings.wiki.includes("gamepedia")) {
+    // Gamepedia doesn't need /wiki/ to access pages
+    if (serverSettings.wiki.includes(".gamepedia.com")) {
         pageUrl += serverSettings.wiki + "/" + encodeURIComponent(pageTitle);
     }
     else {
