@@ -116,7 +116,7 @@ async function cmdSearch(args, message, serverSettings) {
     let searchURL;
 
     // Fandom/Gamepedia wikis don't need /w/ to access the API
-    if ((serverSettings.wiki).includes("fandom") || (serverSettings.wiki).includes("gamepedia")) {
+    if ((serverSettings.wiki).includes(".fandom.com") || (serverSettings.wiki).includes(".gamepedia.com")) {
         searchURL = "https://" + serverSettings.wiki + "/api.php"
     }
     else {
@@ -152,13 +152,25 @@ async function cmdSearch(args, message, serverSettings) {
     let excerpt;
     let categories = [];
 
-    // Get excerpt from the page if avaliable
-    await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=100&explaintext=1&titles=" + pageTitle)
-        .then(data => data.json())
-        .then(data => {
-            excerpt = data.query.pages[pageId].extract ?? undefined;
-        })
-        .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+    if (searchURL.includes(".fandom.com")) {
+        await fetch("https://" + serverSettings.wiki + "/" + pageTitle)
+            .then(data => data.text())
+            .then(text => {
+                let description = text.match(/<meta name="description" content="(.*)"/i);
+                excerpt = description[1] ?? undefined;
+            });
+    }
+
+    else {
+        // Get excerpt from the page if avaliable
+        await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=100&explaintext=1&titles=" + pageTitle)
+            .then(data => data.json())
+            .then(data => {
+                excerpt = data.query.pages[pageId].extract ?? undefined;
+            })
+            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+    }
+
 
     // Get categories from the page if no excerpt is avaliable
     if (excerpt === undefined) {
