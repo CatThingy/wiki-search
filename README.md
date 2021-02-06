@@ -27,11 +27,12 @@ Lists command syntax and links to this page.
 ---
 
 ### `config`
-Usage: `config [setting] [value?]`  
+Usage: `config [channel?] [setting] [value?]`  
 
-Gets or sets the configuration of the bot. Using `config` by itself lists all settings. Using `config [setting]` gets the current value of the specified setting.
+Gets or sets the configuration of the bot. Using `config` by itself lists all settings. Using `config [setting]` gets the current value of the specified setting. Using `config [channel] [setting] [value]` sets/gets settings specifically for the linked channel.
 
-Valid settings are `prefix` for the bot prefix and `wiki` for the MediaWiki wiki to search.
+Valid settings are `enabled` for toggling the bot, `prefix` for the bot prefix and `wiki` for the MediaWiki wiki to search.   
+*`prefix` cannot be changed for individual channels.*
 
 Aliases: `settings`, `set`
 

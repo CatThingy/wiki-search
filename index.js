@@ -295,8 +295,8 @@ function cmdHelp(message, serverSettings) {
                     value: "Shows this message."
                 },
                 {
-                    name: serverSettings.prefix + "config [setting] [value]",
-                    value: "Configures this bot. Use " + serverSettings.prefix + "config by itself to see possible options."
+                    name: serverSettings.prefix + "config [channel?] [setting] [value]",
+                    value: "Configures this bot. Use " + serverSettings.prefix + "config by itself to see possible options. Linking a channel sets settings for that channel only (prefix not included)."
                 },
                 {
                     name: serverSettings.prefix + "search [value]",
