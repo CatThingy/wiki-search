@@ -72,56 +72,110 @@ function cmdConfig(args, message, serverSettings) {
     // Only allow administrators to edit settings, no settings can change in DMs
     if (!message.guild || !message.member.hasPermission("MANAGE_GUILD")) { return; }
 
+    let channel;
+    let channelName;
+
+    if (args[0] && args[0].search(/\d+>/) !== -1) {
+        // Remove 1st arg (channel) and store it
+        channel = args.shift().match(/(\d+)>/)[1];
+        channelName = message.cleanContent.split(" ")[1];
+    }
+
+    let currentSettings = serverSettings;
+
+    if (channel !== undefined) {
+        currentSettings = serverSettings.channelOverrides[channel];
+    }
+
+
     if (args[0] === undefined) {
         message.channel.send({
             embed: {
                 title: "Settings",
                 fields: [
                     {
+                        name: "Enabled",
+                        value: currentSettings.enabled ?? serverSettings.enabled
+                    },
+                    {
                         name: "Prefix",
                         value: serverSettings.prefix
                     },
                     {
                         name: "Wiki: ",
-                        value: serverSettings.wiki
+                        value: currentSettings.wiki ?? serverSettings.wiki
                     }
                 ]
             }
         });
     }
     else if (args[1] === undefined) {
-        if (args[0] == "prefix") {
+        if (args[0] == "enabled") {
+            message.channel.send("```\nEnabled: " + currentSettings.enabled ?? serverSettings.enabled + "\n```")
+        }
+        else if (args[0] == "prefix") {
             message.channel.send("```\nPrefix: " + serverSettings.prefix + "\n```");
         }
         else if (args[0] == "wiki") {
-            message.channel.send("```\Wiki: " + serverSettings.wiki + "\n```");
+            message.channel.send("```\nWiki: " + currentSettings.wiki ?? serverSettings.enabled + "\n```");
         }
     }
     else {
-        if (args[0] == "prefix") {
+        if (args[0] == "enabled") {
+            let parsedBool = isTrue(args[1]);
+
+            if (channel !== undefined) {
+                message.channel.send("```\nWikiSearch has been " + (parsedBool ? "enabled" : "disabled") + " for " + channelName + ".\n```");
+                settings.set(message.guild.id, parsedBool, `channelOverrides.${channel}.enabled`);
+            }
+            else {
+                message.channel.send("```\nWikiSearch has been " + (parsedBool ? "enabled" : "disabled") + ".\n```");
+                settings.set(message.guild.id, parsedBool, "enabled");
+            }
+        }
+        else if (args[0] == "prefix") {
             message.channel.send("```\nPrefix has been changed to " + args[1] + "\n```");
             settings.set(message.guild.id, args[1], "prefix");
+
         }
         else if (args[0] == "wiki") {
             let cleanedUrl = (args[1].match(/https?:\/\/(.*?)\/?$/i) ?? args)[1]
-            message.channel.send("```\nWiki has been changed to " + cleanedUrl + "\n```");
-            settings.set(message.guild.id, cleanedUrl, "wiki");
+
+            if (channel !== undefined) {
+                message.channel.send("```\nWiki for " + channelName + " has been changed to " + cleanedUrl + "\n```");
+                settings.set(message.guild.id, cleanedUrl, `channelOverrides.${channel}.wiki`);
+            }
+            else {
+                message.channel.send("```\nWiki has been changed to " + cleanedUrl + "\n```");
+                settings.set(message.guild.id, cleanedUrl, "wiki");
+            }
         }
     }
 }
 
 async function cmdSearch(args, message, serverSettings) {
+
+    let overrides = serverSettings.channelOverrides[message.channel.id] ?? {};
+    let currentSettings = {
+        enabled: overrides.enabled ?? serverSettings.enabled,
+        wiki: overrides.wiki ?? serverSettings.wiki
+    }
+
+    // don't do anything if disabled
+    if (!currentSettings.enabled) { return; }
+
     let sentMessage = await message.channel.send("```\nSearching...```\n")
 
     const searchTerm = encodeURIComponent(args.join(""));
     let searchURL;
 
+
     // Fandom/Gamepedia wikis don't need /w/ to access the API
-    if ((serverSettings.wiki).includes(".fandom.com") || (serverSettings.wiki).includes(".gamepedia.com")) {
-        searchURL = "https://" + serverSettings.wiki + "/api.php"
+    if ((currentSettings.wiki).includes(".fandom.com") || (currentSettings.wiki).includes(".gamepedia.com")) {
+        searchURL = "https://" + currentSettings.wiki + "/api.php"
     }
     else {
-        searchURL = "https://" + serverSettings.wiki + "/w/api.php"
+        searchURL = "https://" + currentSettings.wiki + "/w/api.php"
     }
 
     let pageTitle;
@@ -145,7 +199,7 @@ async function cmdSearch(args, message, serverSettings) {
                 pageId = data.query.search[0].pageid
             }
         })
-        .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); });
+        .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); });
 
     // Prevents editing over "No results found."
     if (!valid) { return }
@@ -155,7 +209,7 @@ async function cmdSearch(args, message, serverSettings) {
     // Scrape thumbnail from provided page     
     let thumbnail;
 
-    let urlText = await fetch("https://" + serverSettings.wiki + "/wiki/" + pageTitle).then(data => data.text());
+    let urlText = await fetch("https://" + currentSettings.wiki + "/wiki/" + pageTitle).then(data => data.text());
     // console.log(urlText.substring(0, 9000));
     let scrapedImage = urlText.match(/<meta property="og:image" content="(.*)"/i);
 
@@ -182,7 +236,7 @@ async function cmdSearch(args, message, serverSettings) {
             .then(data => {
                 excerpt = data.query.pages[pageId].extract ?? undefined;
             })
-            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
     }
 
 
@@ -202,7 +256,7 @@ async function cmdSearch(args, message, serverSettings) {
                     }
                 }
             })
-            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + serverSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
 
         categories = "Categories: " + (categories.join(", ") || "None");
     }
@@ -211,11 +265,11 @@ async function cmdSearch(args, message, serverSettings) {
     let pageUrl = "https://";
 
     // Gamepedia doesn't need /wiki/ to access pages
-    if (serverSettings.wiki.includes(".gamepedia.com")) {
-        pageUrl += serverSettings.wiki + "/" + encodeURIComponent(pageTitle);
+    if (currentSettings.wiki.includes(".gamepedia.com")) {
+        pageUrl += currentSettings.wiki + "/" + encodeURIComponent(pageTitle);
     }
     else {
-        pageUrl += serverSettings.wiki + "/wiki/" + encodeURIComponent(pageTitle);
+        pageUrl += currentSettings.wiki + "/wiki/" + encodeURIComponent(pageTitle);
     }
 
     sentMessage.edit("", {
@@ -263,5 +317,20 @@ function htmlDecode(str) {
         .replace(/&amp;/g, "&")
         .replace(/&quot;/g, "\"")
         .replace(/&#0*39;/g, "'")
+}
+
+function isTrue(value) {
+    if (typeof (value) === 'string') {
+        value = value.trim().toLowerCase();
+    }
+    switch (value) {
+        case "true":
+        case "1":
+        case "on":
+        case "yes":
+            return true;
+        default:
+            return false;
+    }
 }
 //#endregion

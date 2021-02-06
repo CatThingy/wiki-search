@@ -1,7 +1,9 @@
 {
     "token": "your.token-here",
     "defaultSettings": {
+        "enabled": true,
         "prefix": "w!",
-        "wiki": "en.wikipedia.org"
+        "wiki": "en.wikipedia.org",
+        "channelOverrides": {}
     }
 }
