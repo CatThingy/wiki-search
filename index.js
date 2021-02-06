@@ -150,20 +150,33 @@ async function cmdSearch(args, message, serverSettings) {
     // Prevents editing over "No results found."
     if (!valid) { return }
 
+
+
+    // Scrape thumbnail from provided page     
+    let thumbnail;
+
+    let urlText = await fetch("https://" + serverSettings.wiki + "/wiki/" + pageTitle).then(data => data.text());
+    // console.log(urlText.substring(0, 9000));
+    let scrapedImage = urlText.match(/<meta property="og:image" content="(.*)"/i);
+
+    if (scrapedImage !== null) {
+        thumbnail = scrapedImage[1];
+    }
+
+
+    // Scrape excerpt from page if it's a FANDOM page - no API
     let excerpt;
     let categories = [];
 
     if (searchURL.includes(".fandom.com")) {
-        await fetch("https://" + serverSettings.wiki + "/" + pageTitle)
-            .then(data => data.text())
-            .then(text => {
-                let description = text.match(/<meta name="description" content="(.*)"/i);
-                excerpt = description[1] ?? undefined;
-            });
-    }
+        let scrapedDescription = urlText.match(/<meta name="description" content="(.*)"/i);
 
+        if (scrapedDescription !== null) {
+            excerpt = scrapedDescription[1];
+        }
+    }
     else {
-        // Get excerpt from the page if avaliable
+        // Get excerpt from the page through API
         await fetch(searchURL + "?action=query&format=json&prop=extracts&exchars=300&explaintext=1&titles=" + pageTitle)
             .then(data => data.json())
             .then(data => {
@@ -209,7 +222,10 @@ async function cmdSearch(args, message, serverSettings) {
         embed: {
             url: pageUrl,
             title: pageTitle,
-            description: htmlDecode(excerpt ?? categories)
+            description: htmlDecode(excerpt ?? categories),
+            thumbnail: {
+                url: thumbnail
+            }
         }
     });
 }
@@ -242,10 +258,10 @@ function cmdHelp(message, serverSettings) {
 //#region Helper Functions
 function htmlDecode(str) {
     return str.replace(/&gt/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, "\"")
-    .replace(/&#0*39;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, "\"")
+        .replace(/&#0*39;/g, "'")
 }
 //#endregion
