@@ -84,7 +84,7 @@ function cmdConfig(args, message, serverSettings) {
     let currentSettings = serverSettings;
 
     if (channel !== undefined) {
-        currentSettings = serverSettings.channelOverrides[channel];
+        currentSettings = serverSettings.channelOverrides[channel] ?? {};
     }
 
 
@@ -156,6 +156,7 @@ function cmdConfig(args, message, serverSettings) {
 async function cmdSearch(args, message, serverSettings) {
 
     let overrides = serverSettings.channelOverrides[message.channel.id] ?? {};
+    console.log(serverSettings.channelOverrides[message.channel.id]);
     let currentSettings = {
         enabled: overrides.enabled ?? serverSettings.enabled,
         wiki: overrides.wiki ?? serverSettings.wiki
@@ -199,7 +200,7 @@ async function cmdSearch(args, message, serverSettings) {
                 pageId = data.query.search[0].pageid
             }
         })
-        .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); });
+        .catch(e => { sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"); console.error(e) });
 
     // Prevents editing over "No results found."
     if (!valid) { return }
@@ -236,7 +237,7 @@ async function cmdSearch(args, message, serverSettings) {
             .then(data => {
                 excerpt = data.query.pages[pageId].extract ?? undefined;
             })
-            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+            .catch(e => console.error(e));
     }
 
 
@@ -256,7 +257,7 @@ async function cmdSearch(args, message, serverSettings) {
                     }
                 }
             })
-            .catch(e => sentMessage.edit("```\nAn error occured. Check that " + currentSettings.wiki + " is a valid MediaWiki wiki, then try again\n```"));
+            .catch(e => console.error(e));
 
         categories = "Categories: " + (categories.join(", ") || "None");
     }
